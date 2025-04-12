@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Collection | Upcycle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-float { animation: float 6s infinite ease-in-out; }
+        .animate-fade-in-up { animation: fadeInUp 1s ease-out; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <span class="material-icons text-green-600 text-3xl mr-2 animate-float">recycling</span>
+                <span class="text-xl font-bold text-gray-800">RemakeX</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/home/" class="text-gray-600 hover:text-green-600 flex items-center">
+                    <span class="material-icons mr-2">home</span>
+                    Home
+                </a>
+                <a href="/cart/" class="text-gray-600 hover:text-green-600 flex items-center">
+                    <span class="material-icons mr-2">shopping_cart</span>
+                    Your Cart
+                </a>
+                <a href="/profile/" class="text-gray-600 hover:text-green-600">
+                    <span class="material-icons">person</span>
+                </a>
+                <a href="/logout/" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                    <span class="material-icons mr-2">logout</span>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    {% comment %} {% if messages %}
+    <div class="container mx-auto px-4 py-2">
+        {% for message in messages %}
+        <div class="{% if message.tags %}alert alert-{{ message.tags }}{% endif %} p-4 mb-4 rounded-lg">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %} {% endcomment %}
+    <!-- Display Messages as Pop-Up Notifications -->
+    {% if messages %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for message in messages %}
+        // Create a pop-up notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg z-50';
+        notification.innerHTML = `
+            <p>${'{{ message }}'}</p>
+        `;
+        document.body.appendChild(notification);
+    
+        // Automatically remove the notification after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+        {% endfor %}
+    });
+    </script>
+    {% endif %}
+
+    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl font-bold mb-4 animate-fade-in-up">Explore Our Collection 🌿</h1>
+            <p class="text-lg mb-6 animate-fade-in-up delay-100">Discover sustainable treasures with a story!</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-lg mx-auto">
+            <form method="get" action="{% url 'explore_collection' %}" class="flex items-center border rounded-lg px-4 py-2 bg-white focus-within:ring-2 focus-within:ring-green-500 shadow-sm">
+                <span class="material-icons text-gray-400">search</span>
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Search for products..."
+                    class="w-full ml-2 outline-none bg-transparent"
+                    value="{{ request.GET.q }}"  <!-- Preserve the search query in the input -->
+                >
+                <button type="submit" class="ml-2 text-green-600 hover:text-green-700">
+                    <span class="material-icons">search</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="container mx-auto px-4 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% for product in products %}
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow product-card animate-fade-in-up">
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2">{{ product.name }}</h3>
+                        <p class="text-gray-600 mb-4">{{ product.description }}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-green-600 font-bold">${{ product.price }}</span>
+                            <div class="flex items-center space-x-2">
+                                <form method="post" action="{% url 'add_to_cart' product.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
+                                        <span class="material-icons mr-2">shopping_cart</span>
+                                        Add to Cart
+                                    </button>
+                                </form>
+                                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hover:scale-105 transition-all">
+                                    <span class="material-icons mr-2">shopping_bag</span>
+                                    Buy Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="#" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">facebook</span>
+                </a>
+                <a href="#" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">instagram</span>
+                </a>
+                <a href="#" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">twitter</span>
+                </a>
+            </div>
+            <p class="mb-4">♻️ Join the Upcycle movement. Save the planet, one product at a time.</p>
+            <p class="text-gray-400">© 2025 Upcycle. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

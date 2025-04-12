@@ -1,0 +1,134 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home | Upcycle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-float { animation: float 6s infinite ease-in-out; }
+        .animate-fade-in-up { animation: fadeInUp 1s ease-out; }
+        .animate-pulse { animation: pulse 2s infinite ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <span class="material-icons text-green-600 text-3xl mr-2 animate-float">recycling</span>
+                <span class="text-xl font-bold text-gray-800">RemakeX</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/profile/" class="text-gray-600 hover:text-green-600">
+                    <span class="material-icons">person</span>
+                </a>
+                <a href="/logout/" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                    <span class="material-icons mr-2">logout</span>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white py-20 relative overflow-hidden">
+        <!-- Floating shapes for background -->
+        <div class="absolute inset-0">
+            <div class="shape-1 w-40 h-40 bg-white/10 rounded-full absolute top-10 left-20 animate-float"></div>
+            <div class="shape-2 w-32 h-32 bg-white/15 rounded-full absolute bottom-20 right-32 animate-float-delay"></div>
+            <div class="shape-3 w-24 h-24 bg-white/20 rounded-full absolute top-32 right-20 animate-float"></div>
+        </div>
+        <div class="container mx-auto px-4 text-center relative z-10">
+            <h1 class="text-4xl font-bold mb-4 animate-fade-in-up">Transform Waste into Treasure 🌱</h1>
+            <p class="text-lg mb-8 animate-fade-in-up delay-100">Buy recycled products & sell your old ones</p>
+            <div class="flex justify-center space-x-4">
+                <a href="/sellproduct/" class="bg-white text-green-600 px-8 py-3 rounded-lg hover:bg-gray-100 font-semibold flex items-center animate-fade-in-up delay-200">
+                    <span class="material-icons mr-2">sell</span>
+                    Sell Product
+                </a>
+                <a href="/buyproduct/" class="bg-white text-green-600 px-8 py-3 rounded-lg hover:bg-gray-100 font-semibold flex items-center animate-fade-in-up delay-300">
+                    <span class="material-icons mr-2">shopping_cart</span>
+                    Buy Product
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Products Section -->
+    <div class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center animate-fade-in-up">Featured Products</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Product Card 1 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow animate-fade-in-up">
+                <img src="{% static 'products/img_1604.jpg' %}" alt="Product Image" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-lg mb-2">Upcycled Wooden Table</h3>
+                    <p class="text-gray-600 mb-4">Handcrafted from reclaimed wood</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-green-600 font-bold">$149</span>
+                        <button onclick="window.location.href='/buyproduct/'" class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
+                            <span class="material-icons mr-2">shopping_cart</span>
+                            Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Card 2 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow animate-fade-in-up delay-100">
+                <img src="{% static 'products/glass vase.webp' %}" alt="Product Image" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-lg mb-2">Upcycled Glass Vase</h3>
+                    <p class="text-gray-600 mb-4">Elegant and eco-friendly</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-green-600 font-bold">$79</span>
+                        <button class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
+                            <span class="material-icons mr-2">shopping_cart</span>
+                            Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Card 3 -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow animate-fade-in-up delay-200">
+                <img src="{% static 'products/denim bag.webp' %}" alt="Product Image" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-lg mb-2">Upcycled Denim Bag</h3>
+                    <p class="text-gray-600 mb-4">Stylish and sustainable</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-green-600 font-bold">$59</span>
+                        <button class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
+                            <span class="material-icons mr-2">shopping_cart</span>
+                            Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4">♻️ Join the Upcycle movement. Save the planet, one product at a time.</p>
+            <p class="text-gray-400">© 2025 Upcycle. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
