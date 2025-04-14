@@ -1,11 +1,18 @@
 import os
 from pathlib import Path
 
+
+
+ALLOWED_HOSTS = ['your-service-name.onrender.com']
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 
 SECRET_KEY = 'django-insecure-7d%(%-z$9!_9b-3ls3#xk5ll@zwd@!ygb6#^u=2aeq^c5y_wwi'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
