@@ -35,6 +35,8 @@ urlpatterns = [
     path('delete_from_cart/<int:product_id>/', delete_from_cart, name='delete_from_cart'),
     path('checkout/', checkout_view, name='checkout'),
     path('hire-designer/', hire_designer_view, name='hire_designer'),
+    path('generate-image/', views.generate_image, name='generate_image'),
+    
 ]
 
 if settings.DEBUG:
