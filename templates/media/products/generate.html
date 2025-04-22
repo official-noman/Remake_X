@@ -1,0 +1,6 @@
+<form action="/generate-image/" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="image" accept="image/*" required>
+    <input type="text" name="prompt" placeholder="Enter a prompt" required>
+    <button type="submit">Generate</button>
+</form>

@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-
+from dotenv import load_dotenv
 
 
 ALLOWED_HOSTS = ['your-service-name.onrender.com']
@@ -11,8 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-7d%(%-z$9!_9b-3ls3#xk5ll@zwd@!ygb6#^u=2aeq^c5y_wwi'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+load_dotenv()  # Load .env file
+
+REPLICATE_API_KEY = os.getenv("REPLICATE_API_KEY")
+
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',

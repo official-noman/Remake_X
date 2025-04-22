@@ -5,6 +5,13 @@ from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, ProductForm
 from .models import Product
 from django.contrib import messages
+from django.db.models import Q
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import replicate
+import tempfile
+import os
+
 
 # Home View
 @login_required
@@ -49,29 +56,28 @@ def sell_product_view(request):
         if form.is_valid():
             product = form.save(commit=False)
             product.seller = request.user
+            product.is_available = False
+            product.is_upcycled = form.cleaned_data['is_upcycled'] == 'True'
             product.save()
-            return redirect('explore_collection')
+            messages.success(request, "Product listed successfully! It will be reviewed and made available soon.")
+            form = ProductForm(initial={'is_available': True})
+        else:
+            messages.error(request, "Please correct the errors below.")
     else:
-        form = ProductForm()
+        form = ProductForm(initial={'is_available': True})
+    
     return render(request, 'sellproduct.html', {'form': form})
 
 # Explore Collection View
-from django.shortcuts import render
-from django.db.models import Q
-from .models import Product
-
 def explore_collection_view(request):
-
     query = request.GET.get('q')
-    
     products = Product.objects.filter(is_available=True)
     
     if query:
         products = products.filter(
             Q(name__icontains=query) | Q(description__icontains=query)
-        )
+        )  # Fixed the missing parenthesis here
     
-    # Pass the filtered products to the template
     return render(request, 'explore_collection.html', {'products': products})
 
 # Buy Product View
@@ -108,10 +114,8 @@ def add_to_cart(request, product_id):
     cart[str(product_id)] = cart.get(str(product_id), 0) + 1
     request.session['cart'] = cart
 
-    messages.success(request, 'Product added to cart!')  # Add success message
-    return redirect(request.META.get('HTTP_REFERER', 'explore_collection')) 
-
-    # return redirect(request.META.get('HTTP_REFERER', 'explore_collection'))
+    messages.success(request, 'Product added to cart!')
+    return redirect(request.META.get('HTTP_REFERER', 'explore_collection'))
 
 # Remove from Cart View
 def remove_from_cart(request, product_id):
@@ -141,31 +145,35 @@ def delete_from_cart(request, product_id):
 def checkout_view(request):
     return render(request, 'checkout.html')
 
-@login_required
-def sell_product_view(request):
-    if request.method == "POST":
-        form = ProductForm(request.POST, request.FILES)
-        if form.is_valid():
-            product = form.save(commit=False)
-            product.seller = request.user
-            product.is_available = False  # Ensure availability
-            # is_upcycled_value = request.POST.get("is_upcycled")
-            # product.is_upcycled = is_upcycled_value == "Yes"
-
-            product.is_upcycled = form.cleaned_data['is_upcycled'] == 'True' 
-
-            product.save()
-            messages.success(request, "Product listed successfully! It will be reviewed and made available soon.")
-            form = ProductForm(initial={'is_available': True})
-            # return redirect('sellproduct')
-        else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = ProductForm(initial={'is_available': True})
-    
-    return render(request, 'sellproduct.html', {'form': form})
-
-# hire designer view
+# Hire Designer View
 def hire_designer_view(request):
     return render(request, 'hire_designer.html')
 
+# AI Image Generation View
+@csrf_exempt
+def generate_image(request):
+    if request.method == "POST":
+        prompt = request.POST.get("prompt", "")
+        image_file = request.FILES.get("image")
+
+        if not image_file or not prompt:
+            return JsonResponse({"error": "Missing image or prompt"}, status=400)
+
+        temp_img_path = os.path.join(tempfile.gettempdir(), image_file.name)
+        with open(temp_img_path, "wb") as f:
+            for chunk in image_file.chunks():
+                f.write(chunk)
+
+        output = replicate.run(
+            "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+            input={
+                "prompt": prompt,
+                "image": open(temp_img_path, "rb"),
+                "strength": 0.7,
+            }
+        )
+
+        os.remove(temp_img_path)
+        return JsonResponse({"image_url": output[0]})
+
+    return JsonResponse({"error": "POST method required"}, status=405)
