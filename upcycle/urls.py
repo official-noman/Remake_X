@@ -3,6 +3,9 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from myapp.views import chat_view
+from django.contrib import admin
+from django.urls import path, include
 from myapp.views import (
     home_view,
     login_view,
@@ -35,7 +38,8 @@ urlpatterns = [
     path('delete_from_cart/<int:product_id>/', delete_from_cart, name='delete_from_cart'),
     path('checkout/', checkout_view, name='checkout'),
     path('hire-designer/', hire_designer_view, name='hire_designer'),
-    path('generate-image/', views.generate_image, name='generate_image'),
+    ##path('generate-image/', views.generate_image, name='generate_image'),
+    path('', include('myapp.urls')),  # 👈 Replace with your app name
     
 ]
 

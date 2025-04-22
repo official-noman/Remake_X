@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat with LLaMA 3</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #e6f4ea;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h2 {
+      color: #2e7d32;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background-color: #ffffff;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      padding: 10px 15px;
+      font-size: 16px;
+      border: 1px solid #a5d6a7;
+      border-radius: 8px;
+      width: 300px;
+      outline: none;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #43a047;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #2e7d32;
+    }
+
+    .reply {
+      margin-top: 20px;
+      font-size: 18px;
+      background-color: #c8e6c9;
+      padding: 15px 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .reply strong {
+      color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+  <h2>Talk to Your AI Bot</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <input type="text" name="message" placeholder="Type your message..." required>
+    <button type="submit">Send</button>
+  </form>
+
+  {% if reply %}
+    <div class="reply">
+      <strong>Bot:</strong> {{ reply }}
+    </div>
+  {% endif %}
+</body>
+</html>
