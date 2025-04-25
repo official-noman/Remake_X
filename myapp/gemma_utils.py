@@ -19,10 +19,10 @@ def get_gemma3_response(prompt: str) -> str:
         
         # Run the model with timeout
         result = subprocess.run(
-            ["ollama", "run", "gemma3", prompt],  # Changed to gemma3
+            ["ollama", "run", "gemma:2b", prompt],  # Changed to gemma3
             capture_output=True,
             text=True,
-            timeout=60,  # 60 second timeout
+            timeout=3333,  # 60 second timeout
             check=True  # Raises CalledProcessError for non-zero returns
         )
         
@@ -33,7 +33,7 @@ def get_gemma3_response(prompt: str) -> str:
         return output
         
     except subprocess.TimeoutExpired:
-        return "Error: Model response timed out after 60 seconds"
+        return "Error: Model response timed out after 120 seconds"
     except subprocess.CalledProcessError as e:
         if "not found" in e.stderr.lower():
             return "Error: Gemma3 model not found. Try running: 'ollama pull gemma3'"

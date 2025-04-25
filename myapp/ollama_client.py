@@ -15,13 +15,13 @@ def chat_with_ollama(prompt: str, timeout: int = 30) -> Union[str, Dict]:
     """
     url = "http://localhost:11434/api/generate"
     payload = {
-        "model": "gemma3",  # Using gemma3 instead of gemma:3b
+        "model": "gemma:2b",  # Using gemma3 instead of gemma:3b
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.7,
+            "temperature": 0.5,
             "top_p": 0.9,
-            "max_tokens": 150
+            "max_tokens": 50
         }
     }
     

@@ -124,8 +124,8 @@ CACHES = {
 
 # Ollama and Gemma3 configuration
 OLLAMA_API_BASE = os.getenv('OLLAMA_API_BASE', 'http://localhost:11434')
-GEMMA_MODEL_NAME = os.getenv('GEMMA_MODEL_NAME', 'gemma3')  # Changed to gemma3
-OLLAMA_API_TIMEOUT = 30  # seconds
+GEMMA_MODEL_NAME = os.getenv('GEMMA_MODEL_NAME', 'gemma:2b')  # Changed to gemma3
+OLLAMA_API_TIMEOUT = 120  # seconds
 
 # Security settings for production
 if not DEBUG:
