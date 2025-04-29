@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with LLaMA 3</title>
+  <style>
+    :root {
+      --primary-color: #10a37f;
+      --primary-dark: #0d8a6d;
+      --bg-color: #ffffff;
+      --chat-bg: #f7f7f8;
+      --user-bubble: #ffffff;
+      --bot-bubble: #f0f0f0;
+      --text-color: #343541;
+      --text-light: #6e6e80;
+      --border-color: #e5e5e6;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 0;
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .header {
+      padding: 15px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .message {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      gap: 20px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      background-color: var(--primary-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .user .avatar {
+      background-color: #999;
+    }
+
+    .content {
+      padding-top: 5px;
+      flex: 1;
+    }
+
+    .bubble {
+      padding: 15px;
+      border-radius: 8px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .user .bubble {
+      background-color: var(--user-bubble);
+      border: 1px solid var(--border-color);
+    }
+
+    .bot .bubble {
+      background-color: var(--bot-bubble);
+    }
+
+    .input-area {
+      padding: 15px;
+      border-top: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+    }
+
+    .input-container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 50px 12px 15px;
+      font-size: 16px;
+      resize: none;
+      min-height: 60px;
+      max-height: 200px;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .send-button {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .send-button:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .send-button:disabled {
+      background-color: var(--border-color);
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .message {
+        gap: 12px;
+      }
+      
+      .avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+      }
+      
+      .bubble {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>LLaMA 3</h2>
+  </div>
+
+  <div class="chat-container" id="chat-container">
+    {% for message in chat_history %}
+      <div class="message {{ message.role }}">
+        <div class="avatar">
+          {% if message.role == "user" %}You{% else %}AI{% endif %}
+        </div>
+        <div class="content">
+          <div class="bubble">{{ message.content }}</div>
+        </div>
+      </div>
+    {% endfor %}
+
+    {% if reply %}
+      <div class="message bot">
+        <div class="avatar">AI</div>
+        <div class="content">
+          <div class="bubble">{{ reply }}</div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="input-area">
+    <form method="POST" class="input-container">
+      {% csrf_token %}
+      <textarea name="message" placeholder="Message LLaMA 3..." rows="1" required></textarea>
+      <button type="submit" class="send-button">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Auto-resize textarea
+    const textarea = document.querySelector('textarea');
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Scroll to bottom of chat
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  </script>
+</body>
+</html>
