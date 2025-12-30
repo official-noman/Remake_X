@@ -86,14 +86,16 @@ This makes it suitable both as a **portfolio project** and a starting point for 
 
 ## 🏗 System Architecture
 
+## 🏗 System Architecture
+
 At a high level, Remake_X follows a clean, layered architecture with a local AI engine:
 
 ```mermaid
 flowchart LR
-    user[User Browser] --> ui[Remake_X Web UI<br/>(Django Templates)]
-    ui --> views[Django Views / Controllers]
-    views --> db[(SQLite Database)]
-    views --> ai[Local AI Engine<br/>(Ollama)]
+    user["User Browser"] --> ui["Remake_X Web UI (Django Templates)"]
+    ui --> views["Django Views / Controllers"]
+    views --> db["SQLite Database"]
+    views --> ai["Local AI Engine (Ollama)"]
     ai --> views
 
     style user fill:#f0f8ff,stroke:#4a90e2,stroke-width:1px
