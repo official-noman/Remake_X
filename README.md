@@ -84,7 +84,6 @@ This makes it suitable both as a **portfolio project** and a starting point for 
 
 ---
 
-## 🏗 System Architecture
 
 ## 🏗 System Architecture
 
