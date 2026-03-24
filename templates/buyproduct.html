@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buy Product | Upcycle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            transition: transform 0.3s ease;
+        }
+        .discount-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #EF4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .animate-float { animation: float 6s infinite ease-in-out; }
+        .animate-fade-in-up { animation: fadeInUp 1s ease-out; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center">
+                <span class="material-icons text-green-600 text-3xl mr-2 animate-float">recycling</span>
+                <span class="text-xl font-bold text-gray-800">RemakeX</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/cart/" class="text-gray-600 hover:text-green-600 flex items-center">
+                    <span class="material-icons mr-2">shopping_cart</span>
+                    Your Cart
+                </a>
+                <a href="/profile/" class="text-gray-600 hover:text-green-600">
+                    <span class="material-icons">person</span>
+                </a>
+                <a href="/logout/" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center">
+                    <span class="material-icons mr-2">logout</span>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-green-500 to-green-700 text-white py-20 relative overflow-hidden">
+        <div class="absolute inset-0">
+            <div class="shape-1 w-40 h-40 bg-white/10 rounded-full absolute top-10 left-20 animate-float"></div>
+            <div class="shape-2 w-32 h-32 bg-white/15 rounded-full absolute bottom-20 right-32 animate-float-delay"></div>
+        </div>
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h1 class="text-4xl font-extrabold mb-5 drop-shadow-lg animate-fade-in-up">
+                <span class="text-emerald-200">Eco-Chic Wonders:</span> <br>
+                <span class="text-white">Upcycled, Unique & Unstoppable!</span> 🌿
+            </h1>
+            <p class="text-xl mb-8 font-light italic animate-fade-in-up delay-100">
+                Waste reimagined, beauty reborn—shop sustainable treasures with a story! ✨
+            </p>
+            <a href="/explore_collection/" class="inline-block bg-white text-green-700 px-12 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-gray-100 hover:scale-105 transform transition-all duration-300 animate-bounce-in">
+                Explore Collection → 
+            </a>
+        </div>
+    </div>
+
+    <!-- Special Discount Section -->
+    <div class="mb-12">
+        <h3 class="text-4xl font-extrabold text-green-700 mb-2 text-center animate-fade-in-up" style="text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);">
+            Special Discount
+        </h3>
+        <h4 class="text-xl text-center text-gray-600 mb-6 animate-fade-in-up">Exclusive offers on our upcycled treasures!</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for product in products %}
+            {% if product.discount_percentage %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow product-card relative animate-fade-in-up">
+                <div class="discount-badge">{{ product.discount_percentage }}% Off</div>
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-lg mb-2">{{ product.name }} ({{ product.discount_percentage }}% off)</h3>
+                    <p class="text-gray-600 mb-4">{{ product.description }}</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-gray-400 line-through">${{ product.price }}</span>
+                            <span class="text-green-600 font-bold ml-2">${{ product.discounted_price }}</span>
+                        </div>
+                        <form method="post" action="{% url 'add_to_cart' product.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
+                                <span class="material-icons mr-2">shopping_cart</span>
+                                Add to Cart
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center space-x-6 mb-4">
+                <a href="#" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">facebook</span>
+                </a>
+                <a href="#" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">instagram</span>
+                </a>
+                <a href="#" class="text-gray-400 hover:text-white">
+                    <span class="material-icons">twitter</span>
+                </a>
+            </div>
+            <p class="mb-4">♻️ Join the Upcycle movement. Save the planet, one product at a time.</p>
+            <p class="text-gray-400">© 2025 Upcycle. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

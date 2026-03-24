@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Checkout — Remake_X</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    :root {
+      --green:        #1e6641;
+      --green-mid:    #28a745;
+      --green-light:  #e8f5ee;
+      --green-hover:  #218838;
+      --text:         #1a2e1e;
+      --text-muted:   #5a7060;
+      --border:       #c8e0d0;
+      --white:        #ffffff;
+      --shadow:       0 4px 24px rgba(30,102,65,.10);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--green-light);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: var(--green);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header a {
+      color: rgba(255,255,255,.75);
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .2s;
+    }
+    header a:hover { color: #fff; }
+    .logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: #fff;
+      letter-spacing: .5px;
+    }
+    .logo span { color: #7edc9e; }
+
+    /* ── Layout ─────────────────────────────────────────── */
+    .page {
+      max-width: 860px;
+      margin: 48px auto;
+      padding: 0 20px 60px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+
+    /* ── Card ───────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, var(--green) 0%, #2d8653 100%);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-header svg { flex-shrink: 0; }
+    .card-header h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: #fff;
+      font-weight: 400;
+    }
+
+    /* ── Items table ────────────────────────────────────── */
+    .items { padding: 8px 0; }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--green-light);
+      transition: background .15s;
+    }
+    .item-row:last-child { border-bottom: none; }
+    .item-row:hover { background: #f5fbf7; }
+
+    .item-name  { font-weight: 600; font-size: 15px; color: var(--text); }
+    .item-qty   { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #e6f7ed;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-top: 4px;
+    }
+    .item-price {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: right;
+      white-space: nowrap;
+    }
+    .unit-price { font-size: 12px; color: var(--text-muted); text-align: right; }
+
+    /* ── Totals ─────────────────────────────────────────── */
+    .totals {
+      border-top: 2px solid var(--green-light);
+      padding: 20px 28px;
+      background: #f9fdfb;
+    }
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .totals-row.grand {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Pay button ─────────────────────────────────────── */
+    .pay-section { padding: 24px 28px 28px; }
+
+    .pay-btn {
+      width: 100%;
+      background: var(--green-mid);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 17px 24px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 14px rgba(40,167,69,.35);
+    }
+    .pay-btn:hover {
+      background: var(--green-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(40,167,69,.45);
+    }
+    .pay-btn:active { transform: translateY(0); }
+    .pay-btn:disabled { background: #aaa; cursor: not-allowed; box-shadow: none; transform: none; }
+
+    .secure-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    /* ── Alerts ─────────────────────────────────────────── */
+    .alert {
+      padding: 14px 20px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .alert-error { background: #fff0f0; color: #b00; border: 1px solid #fccaca; }
+
+    @media (max-width: 560px) {
+      .item-row { grid-template-columns: 1fr auto; }
+      .unit-price { display: none; }
+      h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/cart/">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    Back to Cart
+  </a>
+  <span class="logo">Remake<span>_X</span></span>
+  <span style="width:80px"></span>
+</header>
+
+<div class="page">
+  <h1>Order Review</h1>
+  <p class="subtitle">Review your items before completing payment.</p>
+
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-error">⚠️ {{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <!-- Card header -->
+    <div class="card-header">
+      <svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/>
+      </svg>
+      <h2>Your Order ({{ display_items|length }} item{{ display_items|length|pluralize }})</h2>
+    </div>
+
+    <!-- Items -->
+    <div class="items">
+      {% for item in display_items %}
+      <div class="item-row">
+        <div>
+          <div class="item-name">{{ item.product.name }}</div>
+          <div class="item-qty">Qty: {{ item.quantity }}</div>
+          {% if item.product.is_upcycled %}
+          <div class="badge">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM8 12l3 3 5-5"/></svg>
+            Upcycled
+          </div>
+          {% endif %}
+        </div>
+        <div class="unit-price">${{ item.product.discounted_price }} each</div>
+        <div class="item-price">${{ item.total }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Totals -->
+    <div class="totals">
+      <div class="totals-row">
+        <span>Subtotal</span>
+        <span>${{ total }}</span>
+      </div>
+      <div class="totals-row">
+        <span>Shipping</span>
+        <span style="color:#28a745;font-weight:600">Free</span>
+      </div>
+      <div class="totals-row grand">
+        <span>Total</span>
+        <span>${{ total }}</span>
+      </div>
+    </div>
+
+    <!-- Pay button -->
+    <div class="pay-section">
+      <button class="pay-btn" id="pay-btn">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+        </svg>
+        Pay Securely with Stripe
+      </button>
+      <p class="secure-note">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+        256-bit SSL encryption · Powered by Stripe
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const stripe  = Stripe("{{ stripe_public_key }}");
+  const btn     = document.getElementById('pay-btn');
+
+  btn.addEventListener('click', async () => {
+    btn.disabled   = true;
+    btn.textContent = 'Redirecting to Stripe…';
+    const { error } = await stripe.redirectToCheckout({ sessionId: "{{ session_id }}" });
+    if (error) {
+      btn.disabled   = false;
+      btn.innerHTML  = '⚠️ ' + error.message;
+      btn.style.background = '#c0392b';
+    }
+  });
+</script>
+</body>
+</html>

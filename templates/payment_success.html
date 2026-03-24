@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Successful — Remake_X</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:#e8f5ee;min-height:100vh;display:flex;flex-direction:column}
+    header{background:#1e6641;padding:18px 32px}
+    .logo{font-family:'DM Serif Display',serif;font-size:22px;color:#fff}
+    .logo span{color:#7edc9e}
+    .page{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px}
+    .card{background:#fff;border-radius:20px;box-shadow:0 8px 40px rgba(30,102,65,.13);padding:52px 48px;max-width:480px;width:100%;text-align:center}
+    .icon-wrap{width:80px;height:80px;background:#e6f7ed;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;animation:pop .5s cubic-bezier(.36,.07,.19,.97)}
+    @keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.15)}100%{transform:scale(1)}}
+    h1{font-family:'DM Serif Display',serif;font-size:30px;color:#1e6641;margin-bottom:10px}
+    p{color:#5a7060;font-size:15px;line-height:1.6;margin-bottom:8px}
+    .order-box{background:#f5fbf7;border:1px solid #c8e0d0;border-radius:12px;padding:16px 20px;margin:24px 0;text-align:left}
+    .order-row{display:flex;justify-content:space-between;font-size:14px;color:#1a2e1e;padding:4px 0}
+    .order-row span:first-child{color:#5a7060}
+    .btn{display:inline-block;background:#28a745;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:8px;transition:background .2s}
+    .btn:hover{background:#218838}
+  </style>
+</head>
+<body>
+  <header><span class="logo">Remake<span>_X</span></span></header>
+  <div class="page">
+    <div class="card">
+      <div class="icon-wrap">
+        <svg width="38" height="38" fill="none" stroke="#28a745" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h1>Payment Successful!</h1>
+      <p>Thank you for supporting sustainable fashion.<br>Your order is confirmed.</p>
+
+      {% if order_info %}
+      <div class="order-box">
+        <div class="order-row"><span>Amount Paid</span><span><strong>{{ order_info.currency }} ${{ order_info.amount }}</strong></span></div>
+        {% if order_info.email %}
+        <div class="order-row"><span>Confirmation sent to</span><span>{{ order_info.email }}</span></div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <a href="/" class="btn">Continue Shopping</a>
+    </div>
+  </div>
+</body>
+</html>

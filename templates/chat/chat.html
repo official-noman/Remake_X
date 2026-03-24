@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with LLaMA 3</title>
+  <style>
+    :root {
+      --primary:       #10a37f;
+      --primary-dark:  #0d8a6d;
+      --bg:            #ffffff;
+      --bot-bubble:    #f0f0f0;
+      --text:          #343541;
+      --text-light:    #6e6e80;
+      --border:        #e5e5e6;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────── */
+    .header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .header h2 { margin: 0; font-size: 17px; font-weight: 600; }
+
+    .clear-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 13px;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .clear-btn:hover { border-color: #c00; color: #c00; }
+
+    /* ── Chat area ──────────────────────────────────────────────── */
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .message {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      gap: 16px;
+      animation: fadeIn .25s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .user .avatar { background: #888; }
+
+    .content { padding-top: 4px; flex: 1; min-width: 0; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: 10px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .user .bubble  { background: #fff; border: 1px solid var(--border); }
+    .bot  .bubble  { background: var(--bot-bubble); }
+    .error .bubble { background: #fff2f2; border: 1px solid #ffcccc; color: #c00; }
+
+    /* Typing indicator */
+    .typing-dots { display: flex; gap: 5px; padding: 4px 2px; }
+    .typing-dots span {
+      width: 8px; height: 8px;
+      background: var(--text-light);
+      border-radius: 50%;
+      animation: bounce .9s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: .15s; }
+    .typing-dots span:nth-child(3) { animation-delay: .30s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40%           { transform: translateY(-6px); }
+    }
+
+    /* ── Input area ─────────────────────────────────────────────── */
+    .input-area {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    .input-container {
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+    }
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 52px 12px 16px;
+      font-size: 15px;
+      font-family: inherit;
+      resize: none;
+      min-height: 52px;
+      max-height: 200px;
+      outline: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,.05);
+      transition: border-color .2s;
+    }
+    textarea:focus { border-color: var(--primary); }
+
+    .send-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 9px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .send-btn:hover   { background: var(--primary-dark); }
+    .send-btn:disabled{ background: var(--border); cursor: not-allowed; }
+
+    /* ── Empty state ────────────────────────────────────────────── */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-light);
+    }
+    .empty-state svg { opacity: .35; }
+    .empty-state p   { margin: 0; font-size: 15px; }
+
+    @media (max-width: 600px) {
+      .chat-container { padding: 16px 12px; }
+      .input-area      { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<div class="header">
+  <h2>⚡ LLaMA 3.1 · 70B</h2>
+  <button class="clear-btn" id="clear-btn">Clear chat</button>
+</div>
+
+<!-- ── Chat messages ───────────────────────────────────────────────────── -->
+<div class="chat-container" id="chat-container">
+
+  {% if not chat_history %}
+  <div class="empty-state" id="empty-state">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+    <p>Send a message to start chatting.</p>
+  </div>
+  {% endif %}
+
+  {% for msg in chat_history %}
+  <div class="message {{ msg.role }}">
+    <div class="avatar">{% if msg.role == 'user' %}You{% else %}AI{% endif %}</div>
+    <div class="content"><div class="bubble">{{ msg.content }}</div></div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<!-- ── Input ───────────────────────────────────────────────────────────── -->
+<div class="input-area">
+  <div class="input-container">
+    <textarea id="msg-input"
+              placeholder="Message LLaMA 3…"
+              rows="1"
+              autofocus></textarea>
+    <button class="send-btn" id="send-btn" disabled>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  const SEND_URL  = "{% url 'chat_send' %}";
+  const CLEAR_URL = "{% url 'chat_clear' %}";
+  const CSRF      = "{{ csrf_token }}";
+
+  const chatContainer = document.getElementById('chat-container');
+  const msgInput      = document.getElementById('msg-input');
+  const sendBtn       = document.getElementById('send-btn');
+  const clearBtn      = document.getElementById('clear-btn');
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  function scrollBottom() {
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  function removeEmpty() {
+    const el = document.getElementById('empty-state');
+    if (el) el.remove();
+  }
+
+  function appendMessage(role, text) {
+    removeEmpty();
+    const wrap = document.createElement('div');
+    wrap.className = `message ${role}`;
+    wrap.innerHTML = `
+      <div class="avatar">${role === 'user' ? 'You' : 'AI'}</div>
+      <div class="content"><div class="bubble">${escapeHtml(text)}</div></div>`;
+    chatContainer.appendChild(wrap);
+    scrollBottom();
+    return wrap;
+  }
+
+  function appendError(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'message error';
+    wrap.innerHTML = `
+      <div class="avatar" style="background:#c00">!</div>
+      <div class="content"><div class="bubble">⚠️ ${escapeHtml(text)}</div></div>`;
+    chatContainer.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function showTyping() {
+    const wrap = document.createElement('div');
+    wrap.className = 'message bot';
+    wrap.id = 'typing-indicator';
+    wrap.innerHTML = `
+      <div class="avatar">AI</div>
+      <div class="content">
+        <div class="bubble">
+          <div class="typing-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>`;
+    chatContainer.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+  }
+
+  function setLoading(active) {
+    sendBtn.disabled  = active;
+    msgInput.disabled = active;
+    if (active) showTyping();
+    else removeTyping();
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ── Send message ─────────────────────────────────────────────────────────
+
+  async function sendMessage() {
+    const text = msgInput.value.trim();
+    if (!text) return;
+
+    appendMessage('user', text);
+    msgInput.value = '';
+    msgInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    setLoading(true);
+
+    try {
+      const resp = await fetch(SEND_URL, {
+        method:  'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken':  CSRF,
+        },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || data.error) {
+        const msg = data.error || `Server error (${resp.status})`;
+        appendError(msg);
+      } else {
+        appendMessage('bot', data.reply);
+      }
+    } catch (err) {
+      appendError('Network error — please check your connection.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+      msgInput.focus();
+    }
+  }
+
+  // ── Clear chat ───────────────────────────────────────────────────────────
+
+  async function clearChat() {
+    try {
+      await fetch(CLEAR_URL, {
+        method:  'POST',
+        headers: { 'X-CSRFToken': CSRF },
+      });
+    } catch (_) {}
+
+    chatContainer.innerHTML = `
+      <div class="empty-state" id="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <p>Send a message to start chatting.</p>
+      </div>`;
+  }
+
+  // ── Event listeners ──────────────────────────────────────────────────────
+
+  // Enable/disable send button based on input
+  msgInput.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+    sendBtn.disabled = this.value.trim() === '';
+  });
+
+  // Enter to send (Shift+Enter = new line)
+  msgInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+  clearBtn.addEventListener('click', clearChat);
+
+  // Scroll to bottom on load (for restored sessions)
+  scrollBottom();
+</script>
+</body>
+</html>
