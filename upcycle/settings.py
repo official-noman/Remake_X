@@ -17,8 +17,8 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-7d%(%-z$9!_9b-3ls3#xk5ll@zwd@!ygb6#^u=2aeq^c5y_wwi')
 DEBUG = env.bool('DEBUG', default=True) 
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*'] # Render এবং Localhost সবকিছুর জন্য পারমিশন
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8080', 'http://127.0.0.1:8080']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'remakex-production.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080', 'http://127.0.0.1:8080', "https://remakex-production.up.railway.app"]
 
 # ── 3. APPLICATION DEFINITION ────────────────────────────────────────────────
 INSTALLED_APPS =[
