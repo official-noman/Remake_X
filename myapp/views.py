@@ -7,6 +7,7 @@ import replicate
 import stripe
 from django.conf import settings
 from .models import Product, Profile
+from odoo_sync.models import OdooProduct
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
@@ -50,7 +51,6 @@ SYSTEM_PROMPT = "You are a helpful, concise, and friendly AI assistant."
 
 @login_required
 def home_view(request):
-    from odoo_sync.models import OdooProduct
     products = OdooProduct.objects.filter(sync_status="SYNCED", odoo_active=True)[:12]
     return render(request, "home.html", {"odoo_products": products})
 
@@ -111,7 +111,6 @@ def sell_product_view(request):
 
 def explore_collection_view(request):
     """Display all available products (Internal & Odoo) with search functionality"""
-    from odoo_sync.models import OdooProduct
     query = request.GET.get('q')
     
     # Internal Products
@@ -142,14 +141,39 @@ def buy_product_view(request):
 
 def cart_view(request):
     """Display the user's shopping cart"""
-    cart       = request.session.get('cart', {})
-    cart_items =[]
-    total      = 0
+    cart = request.session.get('cart', {})
+    cart_items = []
+    total = 0
 
-    for product_id, quantity in cart.items():
-        product    = get_object_or_404(Product, id=product_id)
-        item_total = product.discounted_price() * quantity
-        cart_items.append({'product': product, 'quantity': quantity, 'total': item_total})
+    for item_id, quantity in cart.items():
+        if item_id.startswith('odoo_'):
+            real_id = item_id.replace('odoo_', '')
+            product = get_object_or_404(OdooProduct, id=real_id)
+            price = product.odoo_price
+            name = product.odoo_name
+            desc = product.odoo_categ_name or "Upcycled Product"
+            image_url = None 
+            is_odoo = True
+        else:
+            product = get_object_or_404(Product, id=item_id)
+            price = product.discounted_price()
+            name = product.name
+            desc = product.description
+            image_url = product.image.url
+            is_odoo = False
+
+        item_total = price * quantity
+        cart_items.append({
+            'product': product, 
+            'quantity': quantity, 
+            'total': item_total,
+            'display_name': name,
+            'display_desc': desc,
+            'display_price': price,
+            'display_image': image_url,
+            'is_odoo': is_odoo,
+            'item_id': item_id
+        })
         total += item_total
 
     return render(request, 'cart.html', {'cart_items': cart_items, 'total': total})
@@ -157,12 +181,22 @@ def cart_view(request):
 
 def add_to_cart(request, product_id):
     """Add a product to the shopping cart"""
-    get_object_or_404(Product, id=product_id)
+    if product_id.startswith('odoo_'):
+        real_id = product_id.replace('odoo_', '')
+        get_object_or_404(OdooProduct, id=real_id)
+    else:
+        get_object_or_404(Product, id=product_id)
+
     cart = request.session.get('cart', {})
     cart[str(product_id)] = cart.get(str(product_id), 0) + 1
     request.session['cart'] = cart
     messages.success(request, 'Product added to cart!')
-    return redirect(request.META.get('HTTP_REFERER', 'explore_collection'))
+    
+    next_url = request.POST.get('next')
+    if not next_url:
+        next_url = request.META.get('HTTP_REFERER', 'explore_collection')
+    
+    return redirect(next_url)
 
 
 def remove_from_cart(request, product_id):
@@ -331,20 +365,39 @@ def checkout_view(request):
     # Stripe Secret Key Set করা হলো
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
-    from .models import Product
-    line_items, display_items, total = [],[], 0
+    line_items, display_items, total = [], [], 0
 
-    for product_id, quantity in cart.items():
-        product    = get_object_or_404(Product, id=product_id)
-        unit_price = int(product.discounted_price() * 100) # Stripe cents এ হিসাব করে
-        item_total = product.discounted_price() * quantity
-        total     += item_total
-        display_items.append({'product': product, 'quantity': quantity, 'total': item_total})
+    for item_id, quantity in cart.items():
+        if item_id.startswith('odoo_'):
+            real_id = item_id.replace('odoo_', '')
+            product = get_object_or_404(OdooProduct, id=real_id)
+            price = product.odoo_price
+            name = product.odoo_name
+            is_odoo = True
+        else:
+            product = get_object_or_404(Product, id=item_id)
+            price = product.discounted_price()
+            name = product.name
+            is_odoo = False
+
+        unit_price = int(price * 100) # Stripe cents এ হিসাব করে
+        item_total = price * quantity
+        total += item_total
+        
+        display_items.append({
+            'product': product, 
+            'quantity': quantity, 
+            'total': item_total,
+            'is_odoo': is_odoo,
+            'display_name': name,
+            'display_price': price
+        })
+        
         line_items.append({
             'price_data': {
                 'currency': 'usd',
                 'unit_amount': unit_price,
-                'product_data': {'name': product.name},
+                'product_data': {'name': name},
             },
             'quantity': quantity,
         })

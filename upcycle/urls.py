@@ -20,10 +20,9 @@ urlpatterns = [
     path('explore_collection/', views.explore_collection_view, name='explore_collection'),
 
     # Shopping Cart
-    path('cart/', views.cart_view, name='cart'),
-    path('add_to_cart/<int:product_id>/', views.add_to_cart, name='add_to_cart'),
-    path('remove_from_cart/<int:product_id>/', views.remove_from_cart, name='remove_from_cart'),
-    path('delete_from_cart/<int:product_id>/', views.delete_from_cart, name='delete_from_cart'),
+    path('add_to_cart/<str:product_id>/', views.add_to_cart, name='add_to_cart'),
+    path('remove_from_cart/<str:product_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('delete_from_cart/<str:product_id>/', views.delete_from_cart, name='delete_from_cart'),
 
     # Checkout & Stripe Payments
     path('checkout/', views.checkout_view, name='checkout'),

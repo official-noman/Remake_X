@@ -129,10 +129,14 @@
                                         Add to Cart
                                     </button>
                                 </form>
-                                <button class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hover:scale-105 transition-all">
-                                    <span class="material-icons mr-2">shopping_bag</span>
-                                    Buy Now
-                                </button>
+                                <form method="post" action="{% url 'add_to_cart' product.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'cart' %}">
+                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hover:scale-105 transition-all">
+                                        <span class="material-icons mr-2">shopping_bag</span>
+                                        Buy Now
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -148,7 +152,23 @@
                         <p class="text-gray-600 mb-4">{{ product.odoo_categ_name|default:"Upcycled Product" }}</p>
                         <div class="flex items-center justify-between">
                             <span class="text-green-600 font-bold">${{ product.odoo_price }}</span>
-                            <span class="text-sm text-gray-500">Stock: {{ product.odoo_qty_available|floatformat:0 }}</span>
+                            <div class="flex items-center space-x-2">
+                                <form method="post" action="{% url 'add_to_cart' 'odoo_'|add:product.id|stringformat:'s' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
+                                        <span class="material-icons mr-2">shopping_cart</span>
+                                        Add to Cart
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'add_to_cart' 'odoo_'|add:product.id|stringformat:'s' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{% url 'cart' %}">
+                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hover:scale-105 transition-all">
+                                        <span class="material-icons mr-2">shopping_bag</span>
+                                        Buy Now
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>

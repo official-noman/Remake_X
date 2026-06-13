@@ -253,16 +253,16 @@
       {% for item in display_items %}
       <div class="item-row">
         <div>
-          <div class="item-name">{{ item.product.name }}</div>
+          <div class="item-name">{{ item.display_name }}</div>
           <div class="item-qty">Qty: {{ item.quantity }}</div>
-          {% if item.product.is_upcycled %}
+          {% if item.is_odoo or item.product.is_upcycled %}
           <div class="badge">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM8 12l3 3 5-5"/></svg>
             Upcycled
           </div>
           {% endif %}
         </div>
-        <div class="unit-price">${{ item.product.discounted_price }} each</div>
+        <div class="unit-price">${{ item.display_price }} each</div>
         <div class="item-price">${{ item.total }}</div>
       </div>
       {% endfor %}
