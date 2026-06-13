@@ -50,8 +50,9 @@ SYSTEM_PROMPT = "You are a helpful, concise, and friendly AI assistant."
 
 @login_required
 def home_view(request):
-    """Render the home page for authenticated users"""
-    return render(request, "home.html")
+    from odoo_sync.models import OdooProduct
+    products = OdooProduct.objects.filter(sync_status="SYNCED", odoo_active=True)[:12]
+    return render(request, "home.html", {"odoo_products": products})
 
 
 def register_view(request):
@@ -109,14 +110,28 @@ def sell_product_view(request):
 
 
 def explore_collection_view(request):
-    """Display all available products with search functionality"""
-    query    = request.GET.get('q')
+    """Display all available products (Internal & Odoo) with search functionality"""
+    from odoo_sync.models import OdooProduct
+    query = request.GET.get('q')
+    
+    # Internal Products
     products = Product.objects.filter(is_available=True)
+    
+    # Odoo Products
+    odoo_products = OdooProduct.objects.filter(sync_status="SYNCED", odoo_active=True)
+
     if query:
         products = products.filter(
             Q(name__icontains=query) | Q(description__icontains=query)
         )
-    return render(request, 'explore_collection.html', {'products': products})
+        odoo_products = odoo_products.filter(
+            Q(odoo_name__icontains=query) | Q(odoo_categ_name__icontains=query)
+        )
+
+    return render(request, 'explore_collection.html', {
+        'products': products,
+        'odoo_products': odoo_products
+    })
 
 
 def buy_product_view(request):

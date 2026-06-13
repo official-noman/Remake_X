@@ -1,5 +1,7 @@
 import os
 import environ
+import dj_database_url
+from celery.schedules import crontab
 from pathlib import Path
 
 # ── 1. INITIALIZE ENVIRONMENT VARIABLES ──────────────────────────────────────
@@ -15,17 +17,23 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-7d%(%-z$9!_9b-3ls3#xk5ll@zwd@!ygb6#^u=2aeq^c5y_wwi')
 DEBUG = env.bool('DEBUG', default=True) 
 
-ALLOWED_HOSTS = ['*'] # Render এবং Localhost সবকিছুর জন্য পারমিশন
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*'] # Render এবং Localhost সবকিছুর জন্য পারমিশন
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8080', 'http://127.0.0.1:8080']
 
 # ── 3. APPLICATION DEFINITION ────────────────────────────────────────────────
 INSTALLED_APPS =[
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
+    'rest_framework',
+    'django_filters',
     'myapp',
+    'odoo_sync.apps.OdooSyncConfig',
 ]
 
 MIDDLEWARE =[
@@ -58,13 +66,11 @@ TEMPLATES =[
 ]
 
 WSGI_APPLICATION = 'upcycle.wsgi.application'
+ASGI_APPLICATION = 'upcycle.asgi.application'
 
 # ── 4. DATABASE & AUTH ───────────────────────────────────────────────────────
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db('DATABASE_URL', default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}")
 }
 
 AUTH_USER_MODEL = 'myapp.CustomUser'
@@ -104,3 +110,45 @@ LOGOUT_REDIRECT_URL = '/'
 # ── 8. STRIPE & API KEYS ─────────────────────────────────────────────────────
 STRIPE_PUBLIC_KEY = env('STRIPE_PUBLIC_KEY', default='')
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY', default='')
+
+# ── 9. ODOO XML-RPC SETTINGS ────────────────────────────────────────────────
+ODOO_URL = env('ODOO_URL', default='')
+ODOO_DB = env('ODOO_DB', default='')
+ODOO_USERNAME = env('ODOO_USERNAME', default='')
+ODOO_PASSWORD = env('ODOO_PASSWORD', default='')
+
+# ── 10. CELERY BEAT SCHEDULE ────────────────────────────────────────────────
+CELERY_BEAT_SCHEDULE = {
+    'sync_odoo_delta': {
+        'task': 'odoo_sync.tasks.sync_odoo_products_delta',
+        'schedule': 30 * 60,
+        'kwargs': {'triggered_by': 'celery-beat'},
+    },
+    'sync_odoo_full': {
+        'task': 'odoo_sync.tasks.sync_odoo_products_full',
+        'schedule': crontab(hour=3, minute=0),
+        'kwargs': {'triggered_by': 'celery-beat'},
+    },
+}
+
+# ── 11. DJANGO REST FRAMEWORK ───────────────────────────────────────────────
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ],
+    'EXCEPTION_HANDLER': 'odoo_sync.exceptions.problem_detail_exception_handler',
+}
+
+# ── 12. DJANGO CHANNELS ─────────────────────────────────────────────────────
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [env('REDIS_URL', default='redis://127.0.0.1:6379/0')],
+        },
+    },
+}
+
+# ── CELERY BROKER ────────────────────────────────────────────────────────────
+CELERY_BROKER_URL = env('REDIS_URL', default='redis://redis:6379/0')
+CELERY_RESULT_BACKEND = env('REDIS_URL', default='redis://redis:6379/0')

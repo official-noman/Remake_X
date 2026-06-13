@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 from myapp import views
@@ -38,6 +38,9 @@ urlpatterns = [
     path('chat/', views.chat_page, name='chat'),
     path('chat/send/', views.chat_send, name='chat_send'),
     path('chat/clear/', views.chat_clear, name='chat_clear'),
+
+    # Odoo Sync API
+    path('api/v1/odoo-sync/', include('odoo_sync.urls')),
 ]
 
 # Media Files (Images) handling in development

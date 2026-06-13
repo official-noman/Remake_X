@@ -1,0 +1,441 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Odoo Sync Dashboard | {{ site_title|default:"Django site admin" }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  :root {
+    --ds-green-fg: #137333; --ds-green-bg: #e6f4ea;
+    --ds-yellow-fg: #9a6700; --ds-yellow-bg: #fff8c5;
+    --ds-red-fg: #b3261e;   --ds-red-bg: #fce8e6;
+    --ds-blue-fg: #0b57d0;  --ds-blue-bg: #e8f0fe;
+    --ds-grey-fg: #5f6368;  --ds-grey-bg: #f1f3f4;
+    --ds-radius: 10px;
+    --ds-card-shadow: 0 2px 8px rgba(0,0,0,.10);
+  }
+
+  /* ── layout ── */
+  .ds-page { padding: 24px 0; }
+  .ds-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 28px;
+  }
+  .ds-header h1 { margin: 0; font-size: 1.55rem; font-weight: 700; }
+  .ds-header .ds-live { display: flex; align-items: center; gap: 6px;
+    font-size: .82rem; color: var(--ds-grey-fg); }
+  .ds-live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ds-green-fg);
+    animation: ds-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes ds-pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%      { opacity:.4; transform:scale(1.25); }
+  }
+
+  /* ── status banner ── */
+  .ds-banner {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px; border-radius: var(--ds-radius);
+    margin-bottom: 28px;
+    border: 1px solid var(--border-color, #ddd);
+    background: var(--darkened-bg, #f8f8f8);
+  }
+  .ds-banner-label { font-weight: 600; font-size: .95rem; }
+  .ds-banner-meta  { font-size: .82rem; color: var(--ds-grey-fg); margin-left: auto; }
+
+  /* ── stat cards ── */
+  .ds-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .ds-card {
+    border-radius: var(--ds-radius);
+    padding: 18px 20px;
+    box-shadow: var(--ds-card-shadow);
+    border: 1px solid var(--border-color, #ddd);
+    background: var(--body-bg, #fff);
+    text-align: center;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .ds-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.13); }
+  .ds-card__val  { font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .ds-card__lbl  { font-size: .78rem; font-weight: 600; text-transform: uppercase;
+                   letter-spacing: .06em; color: var(--ds-grey-fg); }
+  .ds-card--total    { border-top: 4px solid #0b57d0; }
+  .ds-card--synced   { border-top: 4px solid #137333; }
+  .ds-card--pending  { border-top: 4px solid #9a6700; }
+  .ds-card--conflict { border-top: 4px solid #e37400; }
+  .ds-card--error    { border-top: 4px solid #b3261e; }
+
+  /* ── buttons ── */
+  .ds-actions { display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; }
+  .ds-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 20px; border-radius: 6px; font-weight: 600;
+    font-size: .88rem; cursor: pointer; border: none; transition: opacity .15s, transform .1s;
+    text-decoration: none;
+  }
+  .ds-btn:hover  { opacity: .88; transform: translateY(-1px); }
+  .ds-btn:active { transform: translateY(0); }
+  .ds-btn--full  { background: #0b57d0; color: #fff; }
+  .ds-btn--delta { background: #137333; color: #fff; }
+  .ds-btn--logs  { background: var(--darkened-bg,#f1f3f4); color: var(--body-fg,#333);
+                   border: 1px solid var(--border-color,#ddd); }
+  .ds-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ── table ── */
+  .ds-section-title {
+    font-size: 1rem; font-weight: 700; margin-bottom: 12px;
+    padding-bottom: 6px; border-bottom: 2px solid var(--primary, #417690);
+  }
+  .ds-table-wrap { overflow-x: auto; border-radius: var(--ds-radius);
+    border: 1px solid var(--border-color,#ddd); margin-bottom: 32px; }
+  .ds-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+  .ds-table thead th {
+    padding: 10px 14px; text-align: left; font-weight: 700;
+    background: var(--darkened-bg,#f8f8f8);
+    border-bottom: 2px solid var(--border-color,#ddd);
+    white-space: nowrap;
+  }
+  .ds-table tbody tr { border-bottom: 1px solid var(--border-color,#eee); }
+  .ds-table tbody tr:last-child { border-bottom: none; }
+  .ds-table tbody tr:hover { background: var(--darkened-bg,#fafafa); }
+  .ds-table td { padding: 9px 14px; vertical-align: middle; }
+  .ds-table .mono { font-family: monospace; font-size: .82rem; color: var(--ds-grey-fg); }
+
+  /* ── badges ── */
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-weight: 600; font-size: .78rem; letter-spacing: .02em; white-space: nowrap;
+  }
+  .badge-success  { color: var(--ds-green-fg);  background: var(--ds-green-bg); }
+  .badge-running  { color: var(--ds-blue-fg);   background: var(--ds-blue-bg); }
+  .badge-partial  { color: var(--ds-yellow-fg); background: var(--ds-yellow-bg); }
+  .badge-failed   { color: var(--ds-red-fg);    background: var(--ds-red-bg); }
+  .badge-pending  { color: var(--ds-yellow-fg); background: var(--ds-yellow-bg); }
+  .badge-conflict { color: var(--ds-yellow-fg); background: var(--ds-yellow-bg); }
+  .badge-error    { color: var(--ds-red-fg);    background: var(--ds-red-bg); }
+  .badge-synced   { color: var(--ds-green-fg);  background: var(--ds-green-bg); }
+  .badge-unknown  { color: var(--ds-grey-fg);   background: var(--ds-grey-bg); }
+
+  /* ── toast ── */
+  #ds-toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+    background: #333; color: #fff; padding: 10px 18px;
+    border-radius: 8px; font-size: .875rem; font-weight: 500;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+    opacity: 0; transition: opacity .3s;
+    pointer-events: none;
+  }
+  #ds-toast.ds-toast-show { opacity: 1; }
+
+  /* ── ws status dot ── */
+  #ds-ws-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; background: var(--ds-grey-fg);
+    transition: background .4s;
+  }
+  #ds-ws-dot.connected    { background: var(--ds-green-fg); }
+  #ds-ws-dot.disconnected { background: var(--ds-red-fg); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ds-page">
+
+  {# ── Header ── #}
+  <div class="ds-header">
+    <h1>🔄 Odoo Sync Dashboard</h1>
+    <div class="ds-live">
+      <span class="ds-live-dot" id="ds-refresh-dot"></span>
+      <span id="ds-refresh-label">Auto-refresh every 30s</span>
+      &nbsp;|&nbsp;
+      <span id="ds-ws-dot" title="WebSocket status"></span>
+      <span id="ds-ws-label" style="margin-left:4px">WS connecting…</span>
+    </div>
+  </div>
+
+  {# ── Latest sync banner ── #}
+  <div class="ds-banner" id="ds-banner">
+    {% if latest_sync %}
+      <span class="badge badge-{{ latest_sync.status|lower }}" id="ds-banner-badge">
+        {{ latest_sync.status }}
+      </span>
+      <span class="ds-banner-label" id="ds-banner-type">
+        {{ latest_sync.sync_type }} sync
+      </span>
+      <span class="ds-banner-meta" id="ds-banner-meta">
+        Started {{ latest_sync.started_at|date:"Y-m-d H:i:s" }}
+        &nbsp;·&nbsp; Duration: {{ latest_sync.duration }}
+        &nbsp;·&nbsp; Fetched: {{ latest_sync.records_fetched }}
+      </span>
+    {% else %}
+      <span class="badge badge-unknown" id="ds-banner-badge">No syncs yet</span>
+      <span class="ds-banner-label" id="ds-banner-type">—</span>
+      <span class="ds-banner-meta" id="ds-banner-meta">Run a sync to see status here.</span>
+    {% endif %}
+  </div>
+
+  {# ── Stat cards ── #}
+  <div class="ds-cards">
+    <div class="ds-card ds-card--total">
+      <div class="ds-card__val" id="stat-total">{{ stats.total }}</div>
+      <div class="ds-card__lbl">Total</div>
+    </div>
+    <div class="ds-card ds-card--synced">
+      <div class="ds-card__val" id="stat-synced">{{ stats.synced }}</div>
+      <div class="ds-card__lbl">Synced</div>
+    </div>
+    <div class="ds-card ds-card--pending">
+      <div class="ds-card__val" id="stat-pending">{{ stats.pending }}</div>
+      <div class="ds-card__lbl">Pending</div>
+    </div>
+    <div class="ds-card ds-card--conflict">
+      <div class="ds-card__val" id="stat-conflict">{{ stats.conflict }}</div>
+      <div class="ds-card__lbl">Conflict</div>
+    </div>
+    <div class="ds-card ds-card--error">
+      <div class="ds-card__val" id="stat-error">{{ stats.error }}</div>
+      <div class="ds-card__lbl">Error</div>
+    </div>
+  </div>
+
+  {# ── Action buttons ── #}
+  <div class="ds-actions">
+    <button class="ds-btn ds-btn--full"  id="btn-full-sync">⚡ Trigger Full Sync</button>
+    <button class="ds-btn ds-btn--delta" id="btn-delta-sync">↻ Trigger Delta Sync</button>
+    <a class="ds-btn ds-btn--logs"
+       href="{% url 'admin:odoo_sync_synclog_changelist' %}">📋 View All Logs</a>
+    <a class="ds-btn ds-btn--logs"
+       href="{% url 'admin:odoo_sync_odooproduct_changelist' %}">📦 View Products</a>
+
+  </div>
+
+  {# ── Recent sync logs ── #}
+  <div class="ds-section-title">Recent Sync Logs <small style="font-weight:400;font-size:.8rem">(last 10)</small></div>
+  <div class="ds-table-wrap">
+    <table class="ds-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Started</th>
+          <th>Duration</th>
+          <th>Fetched</th>
+          <th>Created</th>
+          <th>Updated</th>
+          <th>Errors</th>
+        </tr>
+      </thead>
+      <tbody id="ds-log-tbody">
+        {% for log in sync_logs %}
+        <tr>
+          <td><strong>{{ log.sync_type }}</strong></td>
+          <td><span class="badge badge-{{ log.status|lower }}">{{ log.status }}</span></td>
+          <td class="mono">{{ log.started_at|date:"Y-m-d H:i:s" }}</td>
+          <td class="mono">{{ log.duration }}</td>
+          <td>{{ log.records_fetched }}</td>
+          <td>{{ log.records_created }}</td>
+          <td>{{ log.records_updated }}</td>
+          <td>{% if log.records_errored %}<strong style="color:var(--ds-red-fg)">{{ log.records_errored }}</strong>{% else %}0{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--ds-grey-fg)">No sync logs yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- .ds-page -->
+
+<div id="ds-toast"></div>
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+(function () {
+  "use strict";
+
+  /* ── Config ── */
+  const STATS_URL    = "{{ dashboard_stats_url }}";
+  const TRIGGER_URL  = "{{ api_trigger_url }}";
+  const REFRESH_MS   = 30_000;
+  const WS_PATH      = "ws/odoo-sync/status/";
+
+  /* ── Helpers ── */
+  const $ = id => document.getElementById(id);
+
+  function toast(msg, ok = true) {
+    const el = $("ds-toast");
+    el.textContent = msg;
+    el.style.background = ok ? "#137333" : "#b3261e";
+    el.classList.add("ds-toast-show");
+    setTimeout(() => el.classList.remove("ds-toast-show"), 3200);
+  }
+
+  function badgeClass(status) {
+    const map = {
+      SUCCESS: "success", RUNNING: "running", PARTIAL: "partial",
+      FAILED: "failed",   SYNCED: "synced",   PENDING: "pending",
+      CONFLICT: "conflict", ERROR: "error",
+    };
+    return "badge badge-" + (map[status] || "unknown");
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    try { return new Date(iso).toISOString().replace("T", " ").slice(0, 19); }
+    catch { return iso; }
+  }
+
+  /* ── Apply stats payload to DOM ── */
+  function applyStats(data) {
+    if (!data) return;
+
+    /* stat cards */
+    const s = data.stats || {};
+    ["total", "synced", "pending", "conflict", "error"].forEach(k => {
+      const el = $("stat-" + k);
+      if (el && s[k] !== undefined) el.textContent = s[k];
+    });
+
+    /* banner */
+    const ls = data.latest_sync;
+    if (ls) {
+      $("ds-banner-badge").className = badgeClass(ls.status);
+      $("ds-banner-badge").textContent = ls.status;
+      $("ds-banner-type").textContent = ls.sync_type + " sync";
+      $("ds-banner-meta").textContent =
+        "Started " + fmtDate(ls.started_at) +
+        "  ·  Duration: " + (ls.duration || "—") +
+        "  ·  Fetched: " + (ls.records_fetched ?? 0);
+    }
+
+    /* log table */
+    const tbody = $("ds-log-tbody");
+    if (!tbody || !Array.isArray(data.sync_logs)) return;
+    if (!data.sync_logs.length) return;
+
+    tbody.innerHTML = data.sync_logs.map(log => {
+      const err = log.records_errored
+        ? `<strong style="color:var(--ds-red-fg)">${log.records_errored}</strong>`
+        : "0";
+      return `<tr>
+        <td><strong>${log.sync_type}</strong></td>
+        <td><span class="${badgeClass(log.status)}">${log.status}</span></td>
+        <td class="mono">${fmtDate(log.started_at)}</td>
+        <td class="mono">${log.duration || "—"}</td>
+        <td>${log.records_fetched ?? 0}</td>
+        <td>${log.records_created ?? 0}</td>
+        <td>${log.records_updated ?? 0}</td>
+        <td>${err}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  /* ── Poll stats endpoint ── */
+  function fetchStats() {
+    fetch(STATS_URL, { credentials: "same-origin" })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(applyStats)
+      .catch(err => console.warn("[ds] stats fetch failed:", err));
+  }
+
+  setInterval(fetchStats, REFRESH_MS);
+
+  /* ── Trigger sync buttons ── */
+  function triggerSync(syncType) {
+    const btn = syncType === "full" ? $("btn-full-sync") : $("btn-delta-sync");
+    btn.disabled = true;
+    btn.textContent = "Queuing…";
+
+    fetch(TRIGGER_URL, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ sync_type: syncType }),
+    })
+      .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+      .then(({ ok, data }) => {
+        if (ok) {
+          toast(`✔ ${syncType.charAt(0).toUpperCase() + syncType.slice(1)} sync queued. Task: ${data.task_id || "—"}`);
+          setTimeout(fetchStats, 1500);
+        } else {
+          toast("✘ " + (data.detail || "Trigger failed."), false);
+        }
+      })
+      .catch(() => toast("✘ Network error while triggering sync.", false))
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = syncType === "full" ? "⚡ Trigger Full Sync" : "↻ Trigger Delta Sync";
+      });
+  }
+
+  $("btn-full-sync").addEventListener("click", () => triggerSync("full"));
+  $("btn-delta-sync").addEventListener("click", () => triggerSync("delta"));
+
+  /* ── WebSocket live status ── */
+  const wsDot   = $("ds-ws-dot");
+  const wsLabel = $("ds-ws-label");
+  let ws = null;
+  let wsRetryDelay = 2000;
+  const WS_MAX_RETRY = 30_000;
+
+  function wsConnect() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const url   = proto + "//" + location.host + "/" + WS_PATH;
+
+    try { ws = new WebSocket(url); } catch { return; }
+
+    ws.addEventListener("open", () => {
+      wsDot.className = "connected";
+      wsLabel.textContent = "WS connected";
+      wsRetryDelay = 2000;
+    });
+
+    ws.addEventListener("message", evt => {
+      try {
+        const msg = JSON.parse(evt.data);
+        /* Partial live update when a sync_progress / sync_completed event fires */
+        if (msg.type === "sync_completed" || msg.type === "sync_progress") {
+          fetchStats();
+        }
+        if (msg.type === "sync_status" && msg.payload) {
+          applyStats(msg.payload);
+        }
+      } catch { /* ignore malformed frames */ }
+    });
+
+    ws.addEventListener("close", () => {
+      wsDot.className = "disconnected";
+      wsLabel.textContent = "WS disconnected — reconnecting…";
+      setTimeout(() => {
+        wsRetryDelay = Math.min(wsRetryDelay * 1.5, WS_MAX_RETRY);
+        wsConnect();
+      }, wsRetryDelay);
+    });
+
+    ws.addEventListener("error", () => ws.close());
+  }
+
+  wsConnect();
+
+  /* ── CSRF helper ── */
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return "";
+  }
+
+})();
+</script>
+{% endblock %}

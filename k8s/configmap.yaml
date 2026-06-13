@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: remake-config
+  namespace: remake-x
+data:
+  DJANGO_SETTINGS_MODULE: "upcycle.settings"
+  ALLOWED_HOSTS: "*"
+  DEBUG: "False"
+  CELERY_BROKER_URL: "redis://redis-master:6379/0"

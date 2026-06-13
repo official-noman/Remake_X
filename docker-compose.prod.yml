@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  web:
+    command: gunicorn upcycle.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile - --error-logfile -
+    restart: unless-stopped
+    volumes: []
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  worker:
+    restart: unless-stopped
+    volumes: []
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  beat:
+    restart: unless-stopped
+    volumes: []
+
+  ws:
+    restart: unless-stopped
+    volumes: []
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  db:
+    restart: unless-stopped
+
+  redis:
+    restart: unless-stopped
+
+  nginx:
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"

@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remake-web
+  namespace: remake-x
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: remake-web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: remake-web
+    spec:
+      containers:
+      - name: web
+        image: ghcr.io/noman-mahmud/remake_x:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: remake-config
+        - secretRef:
+            name: remake-secret
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/odoo-sync/health/
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/odoo-sync/health/
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5

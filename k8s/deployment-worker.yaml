@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remake-worker
+  namespace: remake-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: remake-worker
+  template:
+    metadata:
+      labels:
+        app: remake-worker
+    spec:
+      containers:
+      - name: worker
+        image: ghcr.io/noman-mahmud/remake_x:latest
+        imagePullPolicy: Always
+        command: ["celery", "-A", "upcycle", "worker", "-l", "info"]
+        envFrom:
+        - configMapRef:
+            name: remake-config
+        - secretRef:
+            name: remake-secret
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "128Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"

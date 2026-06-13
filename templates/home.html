@@ -73,53 +73,21 @@
     <div class="container mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center animate-fade-in-up">Featured Products</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Product Card 1 -->
+            {% for product in odoo_products %}
             <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow animate-fade-in-up">
-                <img src="{% static 'products/img_1604.jpg' %}" alt="Product Image" class="w-full h-48 object-cover">
+                <img src="{% static 'products/img_1604.jpg' %}" alt="{{ product.odoo_name }}" class="w-full h-48 object-cover">
                 <div class="p-4">
-                    <h3 class="font-semibold text-lg mb-2">Upcycled Wooden Table</h3>
-                    <p class="text-gray-600 mb-4">Handcrafted from reclaimed wood</p>
+                    <h3 class="font-semibold text-lg mb-2">{{ product.odoo_name }}</h3>
+                    <p class="text-gray-600 mb-4">{{ product.odoo_categ_name|default:"Upcycled Product" }}</p>
                     <div class="flex items-center justify-between">
-                        <span class="text-green-600 font-bold">$149</span>
-                        <button onclick="window.location.href='/buyproduct/'" class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
-                            <span class="material-icons mr-2">shopping_cart</span>
-                            Buy Now
-                        </button>
+                        <span class="text-green-600 font-bold">${{ product.odoo_price }}</span>
+                        <span class="text-sm text-gray-500">Stock: {{ product.odoo_qty_available|floatformat:0 }}</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Product Card 2 -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow animate-fade-in-up delay-100">
-                <img src="{% static 'products/glass vase.webp' %}" alt="Product Image" class="w-full h-48 object-cover">
-                <div class="p-4">
-                    <h3 class="font-semibold text-lg mb-2">Upcycled Glass Vase</h3>
-                    <p class="text-gray-600 mb-4">Elegant and eco-friendly</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-green-600 font-bold">$79</span>
-                        <button class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
-                            <span class="material-icons mr-2">shopping_cart</span>
-                            Buy Now
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Product Card 3 -->
-            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow animate-fade-in-up delay-200">
-                <img src="{% static 'products/denim bag.webp' %}" alt="Product Image" class="w-full h-48 object-cover">
-                <div class="p-4">
-                    <h3 class="font-semibold text-lg mb-2">Upcycled Denim Bag</h3>
-                    <p class="text-gray-600 mb-4">Stylish and sustainable</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-green-600 font-bold">$59</span>
-                        <button class="bg-green-100 text-green-600 px-4 py-2 rounded-lg hover:bg-green-200 hover:scale-105 transition-all">
-                            <span class="material-icons mr-2">shopping_cart</span>
-                            Buy Now
-                        </button>
-                    </div>
-                </div>
-            </div>
+            {% empty %}
+            <p class="text-gray-500 col-span-3 text-center">No synced products yet.</p>
+            {% endfor %}
         </div>
     </div>
 

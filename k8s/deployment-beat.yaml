@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: remake-beat
+  namespace: remake-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: remake-beat
+  template:
+    metadata:
+      labels:
+        app: remake-beat
+    spec:
+      containers:
+      - name: beat
+        image: ghcr.io/noman-mahmud/remake_x:latest
+        imagePullPolicy: Always
+        command: ["celery", "-A", "upcycle", "beat", "-l", "info"]
+        envFrom:
+        - configMapRef:
+            name: remake-config
+        - secretRef:
+            name: remake-secret
+        resources:
+          requests:
+            cpu: "20m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"

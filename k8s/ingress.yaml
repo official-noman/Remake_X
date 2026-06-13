@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: remake-ingress
+  namespace: remake-x
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: default-redirect-https@kubernetescrd
+    nginx.ingress.kubernetes.io/websocket-services: remake-web-svc
+spec:
+  rules:
+  - host: remake.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: remake-web-svc
+            port:
+              number: 8000
+      - path: /ws/
+        pathType: Prefix
+        backend:
+          service:
+            name: remake-web-svc
+            port:
+              number: 8001

@@ -10,7 +10,7 @@ class MyappConfig(AppConfig):
     model_name = "gemma:2b"
 
     def ready(self):
-        self.check_ollama_connection()
+        pass  # ollama removed
 
     def check_ollama_connection(self):
         try:
