@@ -1,4 +1,4 @@
-8"""Health check for Odoo connection."""
+"""Health check for Odoo connection."""
 
 import time
 from typing import Any
